@@ -1,60 +1,119 @@
-[![Build Stable](https://github.com/frappe/frappe_docker/actions/workflows/build_stable.yml/badge.svg)](https://github.com/frappe/frappe_docker/actions/workflows/build_stable.yml)
-[![Build Develop](https://github.com/frappe/frappe_docker/actions/workflows/build_develop.yml/badge.svg)](https://github.com/frappe/frappe_docker/actions/workflows/build_develop.yml)
+**Install Frappe, ERPNext & Excel-ERPNext**
 
-Everything about [Frappe](https://github.com/frappe/frappe) and [ERPNext](https://github.com/frappe/erpnext) in containers.
+`cd Desktop`
 
-# Getting Started
+`git clone https://github.com/frappe/frappe_docker.git`
 
-To get started, you need Docker, docker-compose and git setup on your machine. For Docker basics and best practices. Refer Docker [documentation](http://docs.docker.com).
-After that, clone this repo:
+Copy example devcontainer config from `devcontainer-example` to `.devcontainer`
 
-```sh
-git clone https://github.com/frappe/frappe_docker
-cd frappe_docker
+```
+cp -R devcontainer-example .devcontainer
+cp -R development/vscode-example development/.vscode
 ```
 
-### Try in Play With Docker
+**Add Extra Host**
 
-<a href="https://labs.play-with-docker.com/?stack=https://raw.githubusercontent.com/frappe/frappe_docker/main/pwd.yml">
-  <img src="https://raw.githubusercontent.com/play-with-docker/stacks/master/assets/images/button.png" alt="Try in PWD"/>
-</a>
+`cd .devcontainer`
 
-Wait for 5 minutes for ERPNext site to be created or check `create-site` container logs before opening browser on port 8080. (username: `Administrator`, password: `admin`)
+`nano docker-compose.yml`
 
-# Development
+Add this code in `frappe` image 
 
-We have baseline for developing in VSCode devcontainer with [frappe/bench](https://github.com/frappe/bench). [Start development](development).
+```
+ extra_hosts:
+   - "rma.localhost:172.17.0.1"
+```
 
-# Production
+**Use VSCode Remote Containers extension**
 
-We provide simple and intuitive production setup with prebuilt Frappe and ERPNext images and compose files. To learn more about those, [read the docs](docs/images-and-compose-files.md).
+Install Remote - Containers for VSCode [VS Code Remote Container Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-Also, there's docs to help with deployment:
+**After the extensions are installed, you can:**
+* Open frappe_docker folder in VS Code. `cd frappe_docker`
+* `code .`
+* Launch the command, from Command Palette (Ctrl + Shift + P) `Remote-Containers: Reopen in Container`. You can also click in the bottom left corner to access the remote container menu.
 
-- Examples:
-  - [Single Server](docs/single-server-example.md)
-  - [Setup options](docs/setup-options.md)
-  - [Kubernetes (frappe/helm)](https://helm.erpnext.com)
-- [Site operations](docs/site-operations.md).
-- Other
-  - [backup and push cron jobs](docs/backup-and-push-cronjob.md)
-  - [bench console and vscode debugger](docs/bench-console-and-vscode-debugger.md)
-  - [build version 10](docs/build-version-10-images.md)
-  - [connect to localhost services from containers for local app development](docs/connect-to-localhost-services-from-containers-for-local-app-development.md)
-  - [patch code from images](docs/patch-code-from-images.md)
-  - [port based multi tenancy](docs/port-based-multi-tenancy.md)
-- [Troubleshoot](docs/troubleshoot.md)
+**Setup Environment**
+```
+pip3.7 install virtualenv
+python3.7 -m virtualenv MyEnv
+source MyEnv/bin/activate
+```
 
-# Custom app
+**Setup first bench**
+```
+bench init --skip-redis-config-generation --frappe-branch version-12 --python python3.7 frappe-bench
+cd frappe-bench
+```
+**Setup hosts**
 
-Learn how to containerize your custom Frappe app(s) in [this guide](custom_app/README.md).
+We need to tell bench to use the right containers instead of localhost. Run the following commands inside the container:
 
-# Contributing
+```
+bench set-config -g db_host mariadb
+bench set-config -g redis_cache redis://redis-cache:6379
+bench set-config -g redis_queue redis://redis-queue:6379
+bench set-config -g redis_socketio redis://redis-socketio:6379
+```
+For any reason the above commands fail, set the values in `common_site_config.json` manually.
 
-If you want to contribute to this repo refer to [CONTRIBUTING.md](CONTRIBUTING.md)
+```
+{
+  "db_host": "mariadb",
+  "redis_cache": "redis://redis-cache:6379",
+  "redis_queue": "redis://redis-queue:6379",
+  "redis_socketio": "redis://redis-socketio:6379"
+}
+```
+**Create a new site with bench**
+```
+bench new-site excel_erpnext.localhost --mariadb-root-password 123 --admin-password admin --no-mariadb-socket
+```
+**Enable Developer Mode**
+```
+bench --site excel_erpnext.localhost set-config developer_mode 1
+```
+**Clear Cache**
+```
+bench --site excel_erpnext.localhost clear-cache
+```
+**Install ERPNext Apps**
+```
+bench get-app --branch version-12 erpnext https://github.com/frappe/erpnext.git
+bench --site excel_erpnext.localhost install-app erpnext
+```
+**Install Excel ERPNext Apps**
+```
+bench get-app --branch version-12 excel_erpnext https://gitlab.com/castlecraft/excel_erpnext.git
+bench --site excel_erpnext.localhost install-app excel_erpnext
+```
+**Start Apps**
+```
+bench start
+```
+**Brows your localhost**
+```
+http://excel_erpnext.localhost:8000/
+```
 
-This repository is only for Docker related stuff. You also might want to contribute to:
+# Restore Database 
 
-- [Frappe framework](https://github.com/frappe/frappe#contributing),
-- [ERPNext](https://github.com/frappe/erpnext#contributing),
-- or [Frappe Bench](https://github.com/frappe/bench).
+Download the `mariadb` database from [here](https://files-for-excel-bd.s3.ap-southeast-1.amazonaws.com/20220612_060135/20220612_060135-testerp_excelbd_com-database.sql.gz). After complete the download extract file & past on frappe-bench directory.
+
+* Create new `terminal` in your VS Code
+* Run this command to restore database.
+```
+bench --site excel_erpnext.localhost --force restore 20211024_150012-testerp_excelbd_com-database.sql.gz
+```
+* It will take some time to successfully restore database. 
+
+**Brows your localhost**
+```
+http://excel_erpnext.localhost:8000/
+``` 
+
+**Login**
+* Username : `shaid`
+* Password : `Shaid@123`
+
+
