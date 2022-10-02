@@ -2,7 +2,7 @@
 
 `cd Desktop`
 
-`git clone https://github.com/frappe/frappe_docker.git`
+`git clone https://github.com/excel-azmin/Frappe-Docker.git`
 
 Copy example devcontainer config from `devcontainer-example` to `.devcontainer`
 
