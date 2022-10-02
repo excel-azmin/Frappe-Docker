@@ -1,0 +1,25 @@
+# Environment Variables
+.env
+
+# mounted volume
+sites
+
+development/*
+!development/README.md
+!development/vscode-example/
+
+# Pycharm
+.idea
+
+# VS Code
+.vscode/**
+!.vscode/extensions.json
+
+# VS Code devcontainer
+.devcontainer
+*.code-workspace
+
+# Python
+*.pyc
+__pycache__
+venv
