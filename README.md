@@ -11,19 +11,6 @@ cp -R devcontainer-example .devcontainer
 cp -R development/vscode-example development/.vscode
 ```
 
-**Add Extra Host**
-
-`cd .devcontainer`
-
-`nano docker-compose.yml`
-
-Add this code in `frappe` image 
-
-```
- extra_hosts:
-   - "rma.localhost:172.17.0.1"
-```
-
 **Use VSCode Remote Containers extension**
 
 Install Remote - Containers for VSCode [VS Code Remote Container Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
