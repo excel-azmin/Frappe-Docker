@@ -5,7 +5,7 @@
   "author": "Revant Nandgaonkar",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^5.1.0",
     "redis": "^3.1.1",
     "socket.io": "^2.4.0",
     "superagent": "^5.1.0"
